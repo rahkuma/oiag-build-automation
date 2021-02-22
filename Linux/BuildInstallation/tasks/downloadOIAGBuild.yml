@@ -1,0 +1,65 @@
+- name: Check If build is already downloaded or not
+  stat: 
+    path: '{{ location }}/{{ package_version }}/{{ build_version }}/TIB_{{ product }}_{{ version }}_{{ osBit}}.zip'
+  register: buildexists
+  
+- name: Create all required directories if does not exist
+  file:
+   path: '{{ item }}'
+   state: directory
+   mode: '0755'
+   owner: '{{ ansible_user }}'
+   #  group: staff
+   recurse: true
+  with_items:
+    - '{{ automation_root }}'
+    - '{{ location }}'
+    - '{{ extractedBuild }}'
+    - '{{ location }}/{{ package_version }}/{{ build_version }}'
+  when: not buildexists.stat.exists  
+  
+- name: Create a extractation directory if it does not exist
+  file:
+   path: '{{ extractedBuild }}'
+   state: directory
+   mode: '0755'
+   owner: '{{ ansible_user }}'
+   recurse: true
+  when: not buildexists.stat.exists
+  
+- name: Downloading '{{ product }}' - '{{ version }}' and from to '{{ reldist_oiag_url }}/{{ product }}/{{ version }}/{{ build_version }}/TIB_{{ product }}_{{ version }}_{{ osBit}}.zip'
+  get_url:
+     url: '{{ reldist_oiag_url }}/{{ product }}/{{ version }}/{{ build_version }}/TIB_{{ product }}_{{ version }}_{{ osBit }}.zip'
+     dest: '{{ location }}/{{ package_version }}/{{ build_version }}'
+     remote_src: yes
+     force: no
+  when: not buildexists.stat.exists
+  
+- name: Check if already unzipped or not
+  stat:
+    path: '{{ extractedBuild }}/TIBCOUniversalInstaller_{{ product }}_{{ version }}.silent_backup'
+  #when: buildexists.stat.exists
+  register: extracted
+  
+- name: Remove previously extracted directory and create new directory for same
+  block: 
+  - file:
+     path: '{{ extractedBuild }}'
+     state: absent
+  - file: 
+     path: '{{ extractedBuild }}'
+     state: directory
+     mode: '0755'
+     owner: '{{ ansible_user }}'
+     recurse: true
+    register: directoryCreated
+    
+- name: Unzip Installation archive to {{ extractedBuild }} location
+  unarchive:
+     src: '{{ location }}/{{ package_version }}/{{ build_version }}/TIB_{{ product }}_{{ version }}_{{ osBit }}.zip'
+     dest: '{{ extractedBuild }}'
+     remote_src: yes
+     keep_newer: yes
+     mode: '0755'
+     owner: '{{ ansible_user }}'
+  register: extracted

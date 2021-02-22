@@ -1,0 +1,10 @@
+---
+# tasks file for BuildInstallation
+- name: Include variables
+  include_vars: 
+    file: /etc/ansible/Windows/BuildInstallationWindows/vars/main.yml
+
+- name: Installation inprogress on windows
+  block:
+   - import_tasks: downloadOIAGBuild.yml
+   - import_tasks: installOIAG.yml

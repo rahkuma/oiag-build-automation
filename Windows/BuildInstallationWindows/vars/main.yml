@@ -1,0 +1,18 @@
+---
+# vars file for BuildInstallation
+targetHost: "windows"
+automation_root: C:/OIAGBuildAutomation
+location: '{{ automation_root }}/Installation/DownloadBuilds'
+extractedBuild: '{{ automation_root }}/Installation/InstalledBuilds'
+osBit: 'win_x86_64'
+reldist_oiag_url: 'http://10.106.128.160/package/'
+product: 'oiag'
+version: '3.0.0'
+package_version: '3.0'
+build_version: 'V182.0.2-GA'
+InstallationDirectory: '{{ automation_root }}/BuildInstalled'
+InstallationName: 'OIAG_Automation_{{ version }}{{ build_version }}'
+transport: 'TCP'
+oiag_domainName: 'default'
+oiag_console_port: '2561'
+oiag_agent_self_port: '2551'

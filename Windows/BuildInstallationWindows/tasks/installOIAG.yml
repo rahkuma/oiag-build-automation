@@ -1,0 +1,58 @@
+---
+- name: Backup original silent installation file
+  win_copy:
+    src: '{{ extractedBuild }}/TIBCOUniversalInstaller_{{ product }}_{{ version }}.silent'
+    dest: '{{ extractedBuild }}/TIBCOUniversalInstaller_{{ product }}_{{ version }}.silent_backup'
+    owner: '{{ ansible_user }}'
+    mode: '0755'
+    remote_src: yes    
+  when: extracted.changed == true
+
+- name: Removing !DOCTYPE line for temporary to update silent file
+  win_lineinfile: 
+   dest: '{{ extractedBuild }}/TIBCOUniversalInstaller_{{ product }}_{{ version }}.silent'
+   regexp: ^.*DOCTYPE.*
+   state: absent
+  
+- name: Silent file configuration for OIAG Console and OIAG Agent 
+  win_xml:
+    path: '{{ extractedBuild }}/TIBCOUniversalInstaller_{{ product }}_{{ version }}.silent'
+    xpath: //entry[{{ item.key }}]
+    fragment: '{{ item.value }}'
+    type: text
+    state: present    
+  with_dict: {
+  "@key='installationRoot'":"{{ InstallationDirectory }}",
+  "@key='configDirectoryRoot'":"{{ InstallationDirectory }}",
+  "@key='feature_Console_oiag'":"true",
+  
+  
+  "@key='console.host.ip'":"localhost",
+  "@key='console.port'":"{{ oiag_console_port }}",
+  
+  "@key='agent.host.ip'":"localhost",
+  "@key='agent.port'":"{{ oiag_agent_self_port }}",
+
+ 
+    }
+
+- name: Adding required line in silent file
+  win_lineinfile:
+    path: '{{ extractedBuild }}/TIBCOUniversalInstaller_{{ product }}_{{ version }}.silent'
+    insertbefore: '^<properties.*'
+    line: '<?xml  version="1.0"?><!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">'
+  register: updatedSilentFile
+  
+- name: Start installation of OIAG 3.0.0 with TCP Transport
+  win_command: "{{ extractedBuild }}/TIBCOUniversalInstaller-x86-64.exe -silent -V responseFile='{{ extractedBuild }}/TIBCOUniversalInstaller_{{ product }}_{{ version }}.silent'"
+  run_once: True
+  ignore_errors: no
+
+- name: Checking installation is successful or not
+  win_wait_for:
+    path: "{{ InstallationDirectory }}/tibco/cfgmgmt/oiag/bin/{{ item }}.tra"
+    state: present
+  with_items:
+    - tiboiagent
+    - tiboiconsole
+

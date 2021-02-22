@@ -1,0 +1,4 @@
+[targetHost]
+linux ansible_host=10.128.132.212 ansible_port=22 ansible_user=root ansible_password=firevue ansible_os_family=RedHat
+
+windows ansible_host=10.128.132.215 ansible_user=Administrator ansible_password=firevue ansible_connection=winrm ansible_winrm_server_cert_validation=ignore

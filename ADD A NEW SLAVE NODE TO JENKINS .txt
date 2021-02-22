@@ -1,0 +1,72 @@
+To add a new slave node to jenkins you need to follow given steps,but before,you need to ensure that you are logged in as a user with sudo privillages.
+
+1. On Agent Machine:
+  1. Install necessary packages
+  -You will need to install some packages on the agent node, such as Java, use the below command to install the openjdk:
+   # sudo yum install java-1.8.0-openjdk
+   
+   
+  2. Create a user on the agent to be used by Jenkins
+  -Now we need to create a user on the agent. The Jenkins master will log into the agent as this user, and all build jobs will execute as this user.
+   for example ,The new user will be called jenkins with /var/lib/jenkins as home directory:
+   # sudo useradd -d /var/lib/jenkins jenkins
+   # passwd jenkins
+   
+   
+  3. Generate an ssh key
+  -Next, we need to generate an ssh key. Jenkins will use this key to authenticate with the agent node and log in as the jenkins user. 
+   This key can be generated on practically any Linux machine, but you can also do it on the agent node itself and copy it to the new agents nodes:
+   # su - jenkins
+   # ssh-keygen -t rsa -C "Jenkins agent key"
+   Enter the passpharse twice and generate the key fingerprint.
+   
+  -Add the public SSH key id_rsa.pub to the list of authorized_keys file like below:
+   # cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+   # chmod 600 ~/.ssh/authorized_keys
+   
+  –Copy the private SSH key ~/.ssh/id_rsa from the agent machine to your OS clipboard.
+   # cat ~/.ssh/id_rsa
+   The private key will some what look like:
+   -----BEGIN RSA PRIVATE KEY-----
+   MIIEpAIBAAKCAQEA4crucIGdxVOZfm2Yl8n9R08emHPGbsKSbHfrj3d6fZdPsKvV
+   p7LHQdy1BR4Ie+capljtyUXGDu2YqnJnJViWqvtSAWO12rhC9NyMy1OZUxWbTGKr
+   -----------------------------------------------------------------
+   -----------------------------------------------------------------
+   -----END RSA PRIVATE KEY-----
+   
+   
+   
+   
+2. On Jenkins Server:
+  1. Go to Manage Jenkins -> Manage Nodes
+  
+  
+  2. Then click on the New Node button
+  
+  
+  3. Configure the name of the agent, select Permanent agent and click on the Ok button.
+  
+  
+  4. After creating the new node, you have to configure the node settings. 
+     Fill in the Remote root directory with a path the user on the agent is allowed to write to,Select Launch method  as launch agents via ssh. 
+	 set the Host value with the IP Address of the agent, and press the Add button for Credentials.
+
+	 
+  5. Then , On Jenkins Credential provider choose kind as - SSH username with private key.
+  
+  
+  6. Fill the Username value with the user account on the agent machine,(in our example : jenkins used on agent machine step 2) 
+     and choose Private Key -> Enter directly and paste the key from your clipboard(which you already copied), 
+     and give an ID and a useful Description for this credential. 
+	 
+	 
+  7. Finally click the add button.
+  
+  
+  8. Select the Manually trusted key Verification Strategy value of the Host Key Verification Strategy menu and click save button.
+  
+  
+  9. Your new node should now appear in the list of nodes. You may notice a red X on the node’s icon. This indicates that it is not connected yet.
+     Wait a few seconds and refresh the page, and the red X will go away, indicating that the node is successfully connected.
+  
+    

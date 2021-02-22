@@ -1,0 +1,44 @@
+---
+- name: Backup original silent installation file
+  copy:
+    src: '{{ extractedBuild }}/TIBCOUniversalInstaller_{{ product }}_{{ version }}.silent'
+    dest: '{{ extractedBuild }}/TIBCOUniversalInstaller_{{ product }}_{{ version }}.silent_backup'
+    owner: '{{ ansible_user }}'
+    mode: '0755'
+    remote_src: yes    
+  when: extracted.changed == true
+  
+- name: Silent file configuration for OIAG Console and OIAG Agent 
+  xml:
+    path: '{{ extractedBuild }}/TIBCOUniversalInstaller_{{ product }}_{{ version }}.silent'
+    xpath: '{{ item.key }}'
+    value: '{{ item.value }}'    
+  with_dict: {
+  "/properties/entry[@key='installationRoot']":"{{ InstallationDirectory }}",
+  "/properties/entry[@key='configDirectoryRoot']":"{{ InstallationDirectory }}",
+  "/properties/entry[@key='feature_Console_oiag']":"true",
+  
+  
+  "/properties/entry[@key='console.host.ip']":"localhost",
+  "/properties/entry[@key='console.port']":"{{ oiag_console_port }}",
+  
+  "/properties/entry[@key='agent.host.ip']":"localhost",
+  "/properties/entry[@key='agent.port']":"{{ oiag_agent_self_port }}",
+
+ 
+    }
+  
+- name: Start installation of OIAG 3.0.0 with TCP Transport
+  shell: "{{ extractedBuild }}/TIBCOUniversalInstaller-{{ InstallerOSbit }}.bin -silent -V responseFile='{{ extractedBuild }}/TIBCOUniversalInstaller_{{ product }}_{{ version }}.silent'"
+  run_once: True
+  ignore_errors: no
+
+- name: Checking installation is successful or not
+  wait_for:
+    path: "{{ InstallationDirectory }}/tibco/cfgmgmt/oiag/bin/{{ item }}.tra"
+    state: present
+  with_items:
+    - tiboiagent
+    - tiboiconsole
+  #when: item.key == 'rc' and item.value == 0
+  #with_items: "{{ scriptExecuted.results|dict2items }}"
